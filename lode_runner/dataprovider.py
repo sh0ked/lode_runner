@@ -133,7 +133,11 @@ def _convert(data):
 def _data_set_safe_name(data_set):
     if hasattr(data_set, "__iter__"):
         data_set = _convert(data_set)
-    return _to_str(data_set)
+
+    data_set = _to_str(data_set)
+    for before, after in zip(('.', ':', '/'), ('%2E', '%3A', '%2F')):
+        data_set = data_set.replace(before, after)
+    return data_set
 
 
 def _make_dataprovided_tests(test):
