@@ -4,7 +4,11 @@ import unittest
 from lode_runner.dataprovider import dataprovider
 
 
-class TestCase(unittest.TestCase):
+class ChildTestCase(unittest.TestCase):
+    pass
+
+
+class TestFixtureCase(ChildTestCase):
     @dataprovider([1, 2, 3])
     def test_with_dataprovider_FIXTURE(self, data):
         pass

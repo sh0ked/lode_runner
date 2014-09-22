@@ -56,16 +56,13 @@ class Dataprovider(Plugin):
         _is_test = re.compile(self.conf.testMatchPat)
         for name, obj in inspect.getmembers(module):
             if isinstance(obj, type):
-                if not unittest.TestCase in obj.__bases__:
-                    continue
-
                 test_case = obj
                 methods = [method for method in dir(test_case) if
-                           hasattr(getattr(test_case, method), "__call__")
-                           and not method.startswith("_")]
+                        hasattr(getattr(test_case, method), "__call__")
+                        and not method.startswith("_")]
                 methods = [method for method in methods if _is_test.match(method)]
                 tests = [method for method in methods if
-                         hasattr(getattr(test_case(method), test_case(method)._testMethodName), '__func__')]
+                        hasattr(getattr(test_case(method), test_case(method)._testMethodName), '__func__')]
 
                 if tests:
                     self.makeTest(tests, test_case)

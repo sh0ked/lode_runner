@@ -29,7 +29,7 @@ class DiscoverTest(unittest.TestCase):
         result = run(testRunner=LodeRunner(stream=stream), argv=[
             "lode_runner",
             "--dataproviders-first",
-            "tests/data/dataprovided/dataprovided.py:TestCase.test_with_dataprovider_FIXTURE_2"])
+            "tests/data/dataprovided/dataprovided.py:TestFixtureCase.test_with_dataprovider_FIXTURE_2"])
         self.assertTrue(self.ran_1_test in stream.getvalue(),
                         "\n%s in stream output:\n%s" % (self.ran_1_test, stream.getvalue()))
         self.assertTrue(result)
