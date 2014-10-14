@@ -6,6 +6,7 @@ from time import time
 from cStringIO import StringIO
 
 from nose.plugins.xunit import Xunit, Tee
+from xml.etree import ElementTree
 
 
 MANAGER = multiprocessing.Manager()
@@ -24,6 +25,14 @@ class Tee(Tee):
 
 
 class Xunit(Xunit):
+    def options(self, parser, env):
+        """Sets additional command line options."""
+        parser.add_option('--with-nosetests-first-xml', action="store_true",
+                          default=env.get('WITH_NOSETESTS_FIRST_XML', False),
+                          dest="with_nosetests_first_xml",
+                          help="with_nosetests_first_xml")
+        super(Xunit, self).options(parser, env)
+
     def configure(self, options, config):
         """Configures the xunit plugin."""
         super(Xunit, self).configure(options, config)
@@ -73,11 +82,28 @@ class Xunit(Xunit):
         The file includes a report of test errors and failures.
 
         """
-        self.error_report_file = codecs.open(self.error_report_filename, 'w',
-                                             self.encoding, 'replace')
         self.stats['encoding'] = self.encoding
-        self.stats['total'] = (self.stats['errors'] + self.stats['failures']
-                               + self.stats['passes'] + self.stats['skipped'])
+        total = (self.stats['errors'] + self.stats['failures'] + self.stats['passes'] + self.stats['skipped'])
+        if self.config.options.with_nosetests_first_xml:
+            if self.config.options.failed:
+                try:
+                    xml_file = ElementTree.parse('nosetests_first.xml')
+                    tests = xml_file.getroot().attrib['tests']
+                    self.stats['total'] = int(tests)
+                except IOError:
+                    raise IOError('File nosetests_first.xml not found. '
+                                  'Please rerun lode_runnner with --xunit-file=nosetests_first.xml')
+            elif self.config.options.xunit_file == 'nosetests_first.xml':
+                self.stats['total'] = total
+                self.stats['errors'] = 0
+                self.stats['failures'] = 0
+                self.stats['skipped'] = 0
+            else:
+                self.stats['total'] = total
+        else:
+            self.stats['total'] = total
+
+        self.error_report_file = codecs.open(self.error_report_filename, 'w', self.encoding, 'replace')
         self.error_report_file.write(
             u'<?xml version="1.0" encoding="%(encoding)s"?>'
             u'<testsuite name="nosetests" tests="%(total)d" '
