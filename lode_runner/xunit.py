@@ -109,6 +109,17 @@ class Xunit(Xunit):
             u'<testsuite name="nosetests" tests="%(total)d" '
             u'errors="%(errors)d" failures="%(failures)d" '
             u'skip="%(skipped)d">' % self.stats)
+
+        if self.config.options.with_nosetests_first_xml:
+            for error in self.errorlist:
+                if self.config.options.failed:
+                    if error.find('<error type=') <= 0 or error.find('<failure type=') <= 0 or error.find('<skipped type=') <= 0:
+                        self.errorlist.remove(error)
+                elif self.config.options.xunit_file == 'nosetests_first.xml':
+                    if error.find('<error type=') >= 0 or error.find('<failure type=') >= 0 or error.find('<skipped type=') >= 0:
+                        self.errorlist.remove(error)
+
+
         self.error_report_file.write(u''.join([
             self._forceUnicode(error) for error in self.errorlist
         ]))
