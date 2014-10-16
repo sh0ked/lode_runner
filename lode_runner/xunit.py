@@ -76,14 +76,9 @@ class Xunit(Xunit):
         err = (ec, ev, tb)
         super(Xunit, self).addFailure(test, err, capt, tb_info)
 
-    def report(self, stream):
-        """Writes an Xunit-formatted XML file
-
-        The file includes a report of test errors and failures.
-
-        """
-        self.stats['encoding'] = self.encoding
+    def _modify_stats_for_xml(self):
         total = (self.stats['errors'] + self.stats['failures'] + self.stats['passes'] + self.stats['skipped'])
+
         if self.config.options.with_nosetests_first_xml:
             if self.config.options.failed:
                 try:
@@ -103,13 +98,9 @@ class Xunit(Xunit):
         else:
             self.stats['total'] = total
 
-        self.error_report_file = codecs.open(self.error_report_filename, 'w', self.encoding, 'replace')
-        self.error_report_file.write(
-            u'<?xml version="1.0" encoding="%(encoding)s"?>'
-            u'<testsuite name="nosetests" tests="%(total)d" '
-            u'errors="%(errors)d" failures="%(failures)d" '
-            u'skip="%(skipped)d">' % self.stats)
 
+    @property
+    def _modified_errorlist_for_xml(self):
         if self.config.options.with_nosetests_first_xml:
             for error in self.errorlist:
                 if self.config.options.failed:
@@ -119,9 +110,26 @@ class Xunit(Xunit):
                     if error.find('<error type=') >= 0 or error.find('<failure type=') >= 0 or error.find('<skipped type=') >= 0:
                         self.errorlist.remove(error)
 
+        return self.errorlist
+
+    def report(self, stream):
+        """Writes an Xunit-formatted XML file
+
+        The file includes a report of test errors and failures.
+
+        """
+        self.stats['encoding'] = self.encoding
+        self._modify_stats_for_xml()
+
+        self.error_report_file = codecs.open(self.error_report_filename, 'w', self.encoding, 'replace')
+        self.error_report_file.write(
+            u'<?xml version="1.0" encoding="%(encoding)s"?>'
+            u'<testsuite name="nosetests" tests="%(total)d" '
+            u'errors="%(errors)d" failures="%(failures)d" '
+            u'skip="%(skipped)d">' % self.stats)
 
         self.error_report_file.write(u''.join([
-            self._forceUnicode(error) for error in self.errorlist
+            self._forceUnicode(error) for error in self._modified_errorlist_for_xml
         ]))
 
         self.error_report_file.write(u'</testsuite>')
